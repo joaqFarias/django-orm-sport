@@ -37,7 +37,7 @@ def index(request):
 		#"teams": Team.objects.filter(team_name='Raptors'),
 
 		# ... todos los equipos cuya ubicación incluye "Ciudad"
-		"teams": Team.objects.filter(location__contains='City'),
+		#"teams": Team.objects.filter(location__contains='City'),
 
 		# ... todos los equipos cuyos nombres comienzan con "T"
 		#"teams": Team.objects.filter(team_name__startswith='T'),
@@ -58,18 +58,24 @@ def index(request):
 		#"players": Player.objects.filter(last_name='Cooper').exclude(first_name='Joshua'),
 
 		# ... todos los jugadores con nombre "Alexander" O nombre "Wyatt"
-		"players": Player.objects.filter(Q(first_name='Alexander') | Q(first_name='Wyatt'))
+		#"players": Player.objects.filter(Q(first_name='Alexander') | Q(first_name='Wyatt')),
 
 		# SPORTs ORM II	
 		# ... todos los equipos en la Atlantic Soccer Conference
-		
+		#"teams": Team.objects.filter(league='5'), # 5 = 'International Amateur Soccer Association'
+		"teams": Team.objects.filter(league=League.objects.filter(name='International Amateur Soccer Association').first().id),
+
 		# ... todos los jugadores (actuales) en los Boston Penguins
-		
+		#"players": Player.objects.filter(curr_team='9'),
+		#"players": Player.objects.filter(curr_team=Team.objects.filter(team_name='Broncos').first().id),
+
 		# ... todos los jugadores (actuales) en la International Collegiate Baseball Conference
+		#"players": Player.objects.filter(curr_team=Team.objects.filter(league=League.objects.filter(name='Transamerican Collegiate Basketball Association').first().id).first().id),
 		
 		# ... todos los jugadores (actuales) en la Conferencia Americana de Fútbol Amateur con el apellido "López"
 		
 		# ... todos los jugadores de fútbol
+		#"players": Player.objects.filter(curr_team=Team.objects.filter(league=League.objects.filter(Q(name__contains='Football') | Q(name__contains='Soccer'))))
 		
 		# ... todos los equipos con un jugador (actual) llamado "Sophia"
 		
