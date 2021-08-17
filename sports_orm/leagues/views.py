@@ -3,7 +3,7 @@ from .models import League, Team, Player
 
 from . import team_maker
 
-from django.db.models import Q
+from django.db.models import Q, Count
 
 def index(request):
 	context = {
@@ -28,7 +28,7 @@ def index(request):
 		#'leagues': League.objects.filter(name__contains='Conference'),
 
 		# ... todas las ligas de la región atlántica
-		'leagues': League.objects.filter(Q(name__contains='International') | Q(name__contains='World')), 
+		#'leagues': League.objects.filter(Q(name__contains='International') | Q(name__contains='World')), 
 
 		# ... todos los equipos con sede en Dallas
 		#"teams": Team.objects.filter(location='Dallas'),
@@ -60,42 +60,59 @@ def index(request):
 		# ... todos los jugadores con nombre "Alexander" O nombre "Wyatt"
 		#"players": Player.objects.filter(Q(first_name='Alexander') | Q(first_name='Wyatt')),
 
+
+
 		# SPORTs ORM II	
 		# ... todos los equipos en la Atlantic Soccer Conference
 		#"teams": Team.objects.filter(league='5'), # 5 = 'International Amateur Soccer Association'
-		"teams": Team.objects.filter(league=League.objects.filter(name='International Amateur Soccer Association').first().id),
+		#"teams": Team.objects.filter(league=League.objects.filter(name='International Amateur Soccer Association').first().id),
+		#"teams": Team.objects.filter(league__name='International Amateur Soccer Association'), # <----- ESTE SIIII
 
 		# ... todos los jugadores (actuales) en los Boston Penguins
 		#"players": Player.objects.filter(curr_team='9'),
 		#"players": Player.objects.filter(curr_team=Team.objects.filter(team_name='Broncos').first().id),
+		#"players": Player.objects.filter(curr_team__team_name='Broncos'), # <----- ESTE SIIII
 
 		# ... todos los jugadores (actuales) en la International Collegiate Baseball Conference
 		#"players": Player.objects.filter(curr_team=Team.objects.filter(league=League.objects.filter(name='Transamerican Collegiate Basketball Association').first().id).first().id),
+		#"players": Player.objects.filter(curr_team__league__name='Transamerican Collegiate Basketball Association'), # <----- ESTE SIIII
 		
-		# ... todos los jugadores (actuales) en la Conferencia Americana de Fútbol Amateur con el apellido "López"
+		# ... todos los jugadores (actuales) en la Conferencia Americana de Fútbol Amateur con el apellido "López", 'Price'
+		#"players": Player.objects.filter(Q(curr_team__league__name="American League of Womens' Soccer Athletics") & Q(last_name='Price')),
 		
 		# ... todos los jugadores de fútbol
-		#"players": Player.objects.filter(curr_team=Team.objects.filter(league=League.objects.filter(Q(name__contains='Football') | Q(name__contains='Soccer'))))
+		#"players": Player.objects.filter(Q(curr_team__league__name__contains='Football') | Q(curr_team__league__name__contains='Soccer')),
 		
 		# ... todos los equipos con un jugador (actual) llamado "Sophia"
+		#"teams": Team.objects.filter(curr_players__first_name="Sophia"),
 		
 		# ... todas las ligas con un jugador (actual) llamado "Sophia"
+		'leagues': League.objects.filter(teams__curr_players__first_name="Sophia"),
 		
 		# ... todos con el apellido "Flores" que NO (actualmente) juegan para los Washington Roughriders
+		#"players": Player.objects.filter(Q(last_name="Flores") & ~Q(curr_team__team_name='Washington Roughriders')),
 		
 		# ... todos los equipos, pasados y presentes, con los que Samuel Evans ha jugado
+		#"teams": Team.objects.filter(Q(all_players__first_name="Samuel")),
+		#"teams": Team.objects.filter(Q(all_players__first_name="Samuel") & Q(all_players__last_name="Evans")),
 		
-		# ... todos los jugadores, pasados y presentes, con los gatos tigre de Manitoba
-		
-		# ... todos los jugadores que anteriormente estaban (pero que no lo están) con los Wichita Vikings
+		# ... todos los jugadores, pasados y presentes, con los gatos tigre de Manitoba, no esta mejor: "Bullets"
+		#"players": Player.objects.filter(all_teams__team_name="Bullets"),
+
+		# ... todos los jugadores que anteriormente estaban (pero que no lo están) con los Wichita Vikings, mejor "Iowa Vikings"
+		#"players": Player.objects.filter(Q(Q(all_teams__team_name="Vikings") & Q(all_teams__location="Iowa")) & ~Q(Q(curr_team__team_name="Vikings") & Q(curr_team__location="Iowa"))),
 		
 		# ... cada equipo para el que Jacob Gray jugó antes de unirse a los Oregon Colts
+		#"teams": Team.objects.filter(Q(all_players__first_name="Jacob") & ~Q(curr_players__first_name="Jacob")),
 		
 		# ... todos llamados "Joshua" que alguna vez han jugado en la Federación Atlántica de Jugadores de Béisbol Amateur
-		
+		#"players": Player.objects.filter(Q(first_name="Joshua") & Q(all_teams__league__name="Transamerican Collegiate Basketball Association")),
+
 		# ... todos los equipos que han tenido 12 o más jugadores, pasados y presentes. (SUGERENCIA: busque la función de anotación de Django).
+		"teams": Team.objects.annotate(num_players=Count('all_players')).filter(num_players__gte=12),
 		
 		# ... todos los jugadores y el número de equipos para los que jugó, ordenados por la cantidad de equipos para los que han jugado
+		"players": Player.objects.annotate(num_teams=Count('all_teams')).order_by('num_teams')
 
 	}
 	return render(request, "leagues/index.html", context)
